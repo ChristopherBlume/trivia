@@ -140,6 +140,26 @@ def create_app(test_config=None):
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
+  # * Done
+  @app.route('/questions/<int:question_id>', methods=["DELETE"])
+  def delete_question(question_id):
+    try:
+      question = Question.query.filter(Question.id == question_id).one_or_none()
+
+      if Question is None:
+        abort(404)
+        
+      question.delete()
+
+      return jsonify({
+        'success': True,
+        'deleted': question_id,
+        'message': "Question successfully deleted"
+      }), 200
+
+    except Exception as e:
+      print(e)
+      abort(500)
 
   '''
   @TODO: 
@@ -151,6 +171,32 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
+  # * Done
+  @app.route('/questions', methods=['POST'])
+  def create_question():
+    body = request.get_json()
+
+    question_text = body.get('question', None)
+    answer_text = body.get('answer', None)
+    category = body.get('categorie', None)
+    difficulty = body.get('difficulty', None)
+
+    try:
+      question_to_add = Question(question=question_text, answer=answer_text, category=category, difficulty=difficulty)
+      question_to_add.insert()
+
+      selection = Question.query.order_by(Question.id).all()
+      current_questions = paginate_questions(request, selection)
+
+      return jsonify({
+        'success': True,
+        'created': question_to_add.id,
+        'questions': current_questions,
+        'total_questions': len(Question.query.all())
+      }), 200
+    except Exception as e:
+      print(e)
+      abort(422)
 
   '''
   @TODO: 
@@ -162,6 +208,31 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
+  # * Done
+  @app.route('/questions/search', methods=['POST'])
+  def search_questions():
+    data = request.get_json()
+    search_term = data.get('searchTerm', None)
+
+    if search_term == '':
+      abort(422)
+
+    try:
+      selection = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
+      current_questions = paginate_questions(request, selection)
+
+      if len(selection) == 0:
+        abort(404)
+              
+      return jsonify({
+        'success': True,
+        'questions': current_questions,
+        'total_questions': len(Question.query.all())
+      }), 200
+    except Exception as e:
+      print(e)
+      abort(404)
+
 
   '''
   @TODO: 
