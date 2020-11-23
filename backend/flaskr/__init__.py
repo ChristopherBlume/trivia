@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request, abort, jsonify
+from flask.globals import current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
@@ -7,6 +8,18 @@ import random
 from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
+
+# Paginate Method similar to bookshelf application
+def paginate_questions(request, selection):
+  page = request.args.get('page', 1, type=int)
+  start = (page - 1) * QUESTIONS_PER_PAGE
+  end = start + QUESTIONS_PER_PAGE
+
+  questions = [question.format() for question in selection]
+  current_questions = questions[start:end]
+
+  return current_questions
+
 
 def create_app(test_config=None):
   # create and configure the app
@@ -22,12 +35,54 @@ def create_app(test_config=None):
   '''
   @TODO: Use the after_request decorator to set Access-Control-Allow
   '''
+  # * DONE
+  @app.after_request
+  def after_request(response):
+    """ Set Access Control """
+
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, true')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
+
+    return response
+
+  '''
+  Home Path
+  '''
+  @app.route('/')
+  def index():
+    return jsonify({
+      'succees': True,
+      'message': 'Welcome!'
+    })
 
   '''
   @TODO: 
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
+  # * DONE
+  @app.route('/categories')
+  def get_all_categories():
+    """[GET all categories endpoint]
+
+    Returns:
+        list of categories: returns all categories
+    """
+    try:
+      categories = Category.query.all()
+      # Format the categorie to be correctly rendered in the frontend
+      categories_dictonary = {}
+      for category in categories:
+        categories_dictonary[category.id] = category.type
+
+      # Response
+      return jsonify({
+        'success': True,
+        'categories': categories_dictonary
+      }), 200
+    except Exception as e:
+      print(e)
+      abort(500)
 
 
   '''
@@ -42,6 +97,41 @@ def create_app(test_config=None):
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions. 
   '''
+  # * Done
+  @app.route('/questions')
+  def get_all_questions():
+    '''
+    [GET all questions endpoint]
+
+    Returns:
+        list of questions: returns all questions paginated
+        number of total questions: integer
+        current category: the category that suits the list of questions
+        categories: all categories
+    '''
+    # Get all questions and paginate them
+    questions = Question.query.all()
+    total_questions = len(questions)
+    current_questions = paginate_questions(request, questions)
+
+    # Get categories and add them to a dictionary
+    categories = Category.query.all()
+    categories_dictonary = {}
+    for category in categories:
+      categories_dictonary[category.id] = category.type
+
+    # Abort, if no questions found
+    if(len(current_questions) == 0):
+      abort(404)
+
+    # Response, if success
+    return jsonify({
+      'success': True,
+      'questions': current_questions,
+      'total_questions': total_questions,
+      'categories': categories_dictonary
+    }), 200
+
 
   '''
   @TODO: 
@@ -100,7 +190,38 @@ def create_app(test_config=None):
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
+  # * DONE
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      'success': False, 
+      'error': 404,
+      'message': "Resource not found"
+      }), 404
+
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      "success": False, 
+      "error": 422,
+      "message": "Unprocessable request"
+      }), 422
+
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      "success": False, 
+      "error": 400,
+      "message": "bad request"
+      }), 400
+
+  @app.errorhandler(500)
+  def internal_server_error(error):
+    return jsonify({
+      'success': False,
+      'error': 500,
+      'message': 'An error has occured, please try again'
+      }), 500
   
   return app
-
     
