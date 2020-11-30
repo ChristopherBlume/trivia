@@ -197,7 +197,7 @@ GET `/categories/<int:category_id>/questions` Fetches a python dictionary of que
 
 POST `/quizzes` Fetches random questions within a category.
 
-- Request Parameter - Body: {previous_question:array, quiz_category: {id:int, type:string}}
+- Request Parameter - Body: {previous_question:array, quiz_category: {type:string, id:int}}
 - Example Response:
 
 ```bash
