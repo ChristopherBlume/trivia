@@ -246,12 +246,12 @@ def create_app(test_config=None):
   # * DONE
   @app.route('/categories/<int:category_id>/questions')
   def get_questions_by_category(category_id):
-    category = Category.query.filter_by(id=category_id)
+    category = Category.query.filter_by(id=category_id).one_or_none()
 
     if (category is None):
       abort(404)
 
-    questions = Question.query.filter_by(id=category_id).all()
+    questions = Question.query.filter_by(category=category_id).all()
     current_questions=paginate_questions(request, questions)
 
     return jsonify({
@@ -281,7 +281,6 @@ def create_app(test_config=None):
 
     if ((quiz_category is None) or (previous_questions is None)):
       abort(404)
-
 
     if(quiz_category['id'] == False):
       questions = Question.query.all()
