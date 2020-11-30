@@ -192,7 +192,8 @@ def create_app(test_config=None):
         'success': True,
         'created': question_to_add.id,
         'questions': current_questions,
-        'total_questions': len(Question.query.all())
+        'total_questions': len(Question.query.all()),
+        'message': 'Question successfully created'
       }), 200
     except Exception as e:
       print(e)

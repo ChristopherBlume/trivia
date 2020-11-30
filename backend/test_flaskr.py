@@ -1,6 +1,7 @@
 import os
 import unittest
 import json
+from flask.globals import request
 from flask_sqlalchemy import SQLAlchemy
 
 from flaskr import create_app
@@ -60,7 +61,52 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Resource not found')
-    
+   
+    """
+    Test Case: POST - /questions to create a question
+    """
+    def test_create_question(self):
+
+        mock_question = {
+            'question': 'Mock Question',
+            'answer': 'Mock Answer',
+            'difficulty': 1,
+            'category': 1
+        }
+
+        response = self.client().post('/questions', json=mock_question)
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['message'], 'Question successfully created')
+
+
+    """
+    Test Case: DELETE - /questions/<int:question_id> to delete a question
+    """
+    def test_successful_delete_question(self):
+        # in order to test this endpoint i need a valid question in the database.
+        question = Question(
+            question='Test Question which needs to be deleted.',
+            answer='Test Anwser to be deleted',
+            difficulty=1,
+            category='1'
+        )
+
+        # insert to database
+        question.insert()
+
+        # get id 
+        id = question.id
+
+        # delete mock question, process request
+        response = self.client().delete('/questions/{}'.format(id))
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['message'], "Question successfully deleted")  
 
     """
     Test Case: POST - /questions/search WITH Results
@@ -100,7 +146,7 @@ class TriviaTestCase(unittest.TestCase):
     Test Case: GET - /categories NON EXISTING category
     """
 
-    def test_get_all_categories(self):
+    def test_get_invalid_category(self):
         res = self.client().get('/categories/12345678')
         data = json.loads(res.data)
 
@@ -109,7 +155,35 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'Resource not found')    
 
 
+    """
+    Test Case: GET - /categories/<int:category_id>/questions 
+    """
+    def test_get_questions_by_category(self):
+        # 6 == Sports category
+        response = self.client().get('/categories/6/questions')
+        data = json.loads(response.data)
 
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertNotEqual(len(data['questions']), 0)
+        self.assertEqual(data['current_category'], 6)
+
+
+
+    """
+    Test Case: POST - /quizzes
+    """
+    def test_play_quiz(self):
+        quiz_data = {
+            'previous_questions': [],
+            'quiz_category': {'type': 'History', 'id': 5}
+        }
+
+        response = self.client().get('/quizzes', json=quiz_data)
+        data = json.loads(response.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
