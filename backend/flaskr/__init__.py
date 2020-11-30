@@ -288,16 +288,33 @@ def create_app(test_config=None):
     if ((quiz_category is None) or (previous_questions is None)):
       abort(404)
 
-    if(quiz_category['id'] == False):
+    if(quiz_category['id'] == 0):
       questions = Question.query.all()
     else:
       questions = Question.query.filter_by(category=quiz_category['id']).all()
 
+    total = len(questions)
     # Randomize Method
     def random_question():
       return questions[random.randint(0, len(questions)-1)]
 
+    # Check if question was used
+    def check_usage(question):
+      used = False
+      for q in previous_questions:
+        if (q == question.id):
+          used = True
+      return used
+
     next_question = random_question()
+
+    while(check_usage(next_question)):
+      next_question = random_question()
+
+      if(len(previous_questions) == total):
+        return jsonify({
+          'success': True
+        })
 
     return jsonify({
       'success': True,

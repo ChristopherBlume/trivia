@@ -77,9 +77,9 @@ class TriviaTestCase(unittest.TestCase):
         response = self.client().post('/questions', json=mock_question)
         data = json.loads(response.data)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['message'], 'Question successfully created')
+        self.assertEqual(data['message'], 'Question successfully created!')
 
 
     """
@@ -175,14 +175,14 @@ class TriviaTestCase(unittest.TestCase):
     """
     def test_play_quiz(self):
         quiz_data = {
-            'previous_questions': [],
-            'quiz_category': {'type': 'History', 'id': 5}
+            'previous_questions': [3, 5],
+            'quiz_category': {'type': 'Science', 'id': 1}
         }
 
-        response = self.client().get('/quizzes', json=quiz_data)
+        response = self.client().post('/quizzes', json=quiz_data)
         data = json.loads(response.data)
 
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(data['success'], True)
 
 # Make the tests conveniently executable
