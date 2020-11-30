@@ -174,24 +174,36 @@ def create_app(test_config=None):
   # * Done
   @app.route('/questions', methods=['POST'])
   def create_question():
-    body = request.get_json()
+    # Get json data from request
+      data = request.get_json()
 
-    question = body.get('question', None)
-    answer = body.get('answer', None)
-    category = body.get('category', None)
-    difficulty = body.get('difficulty', None)
+    # Assign individual data from json data into variables
+      question = data.get('question', '')
+      answer = data.get('answer', '')
+      difficulty = data.get('difficulty', '')
+      category = data.get('category', '')
 
-    try:
-      question_to_add = Question(question=question, answer=answer, category=category, difficulty=difficulty)
-      question_to_add.insert()
+      # Validate to ensure no data is empty
+      if ((question == '') or (answer == '') or (difficulty == '') or (category == '')):
+        abort(422)
 
-      return jsonify({
-        'success': True,
-        'message': 'Question successfully created'
-      }), 200
-    except Exception as e:
-      print(e)
-      abort(422)
+      try:
+        # Create a new question instance
+        question = Question(question=question, answer=answer, difficulty=difficulty, category=category)
+
+        #  Save the question
+        question.insert()
+
+        # Return a success message
+        return jsonify({
+          'success': True,
+          'message': 'Question successfully created!'
+        }), 201
+
+      except Exception as e:
+        print(e)
+        # Return 422 status code if there is an error
+        abort(422)
 
   '''
   @TODO: 
