@@ -176,23 +176,17 @@ def create_app(test_config=None):
   def create_question():
     body = request.get_json()
 
-    question_text = body.get('question', None)
-    answer_text = body.get('answer', None)
-    category = body.get('categorie', None)
+    question = body.get('question', None)
+    answer = body.get('answer', None)
+    category = body.get('category', None)
     difficulty = body.get('difficulty', None)
 
     try:
-      question_to_add = Question(question=question_text, answer=answer_text, category=category, difficulty=difficulty)
+      question_to_add = Question(question=question, answer=answer, category=category, difficulty=difficulty)
       question_to_add.insert()
-
-      selection = Question.query.order_by(Question.id).all()
-      current_questions = paginate_questions(request, selection)
 
       return jsonify({
         'success': True,
-        'created': question_to_add.id,
-        'questions': current_questions,
-        'total_questions': len(Question.query.all()),
         'message': 'Question successfully created'
       }), 200
     except Exception as e:
