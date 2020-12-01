@@ -83,6 +83,24 @@ class TriviaTestCase(unittest.TestCase):
 
 
     """
+    Test Case: POST - /questions to create a question ERROR case
+    """
+    def test_create_question_emtpy_data(self):
+        empty_question = {
+            'question': '',
+            'answer': '',
+            'difficulty': 1,
+            'category': 1,
+        }
+
+        response = self.client().post('/questions', json=empty_question)
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'Unprocessable request')
+
+    """
     Test Case: DELETE - /questions/<int:question_id> to delete a question
     """
     def test_successful_delete_question(self):
@@ -107,6 +125,19 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertEqual(data['message'], "Question successfully deleted")  
+
+    """
+    Test Case: DELETE - /questions/<int:question_id> to delete a question ERROR case
+    """
+    def test_unsuccessful_delete_question(self):
+        # Test to delete a non-existing question
+
+        response = self.client().delete('/questions/1348796')
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'An error has occured, please try again')
 
     """
     Test Case: POST - /questions/search WITH Results
@@ -168,8 +199,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertNotEqual(len(data['questions']), 0)
         self.assertEqual(data['current_category'], 6)
 
-
-
     """
     Test Case: POST - /quizzes
     """
@@ -184,6 +213,18 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['success'], True)
+
+    """
+    Test Case: POST - /quizzes ERROR case
+    """
+    def test_play_quiz_no_data(self):
+        # Test if playing is possible if no data is passed
+        response = self.client().post('/quizzes', json={})
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'Resource not found')
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
